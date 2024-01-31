@@ -35,9 +35,43 @@ mongoose.connect("mongodb+srv://navdishjaggi:Navdish2001@cluster0.m2bproi.mongod
 //     res.sendFile(__dirname + '/login.html');
 // })
 
+app.get('/users', async function(req, res){
+    // console.log(req);
+    const page = req.query.page_num;
+    const count_users = req.query.users_num;
+    // console.log(req.query);
+    
+    // const users_data = await Users.find().sort({name : 1}).where('').slice((page-1)*count_users, count_users);
+    const users_data = await Users.find().sort({name : 1}).skip((page-1)*count_users).limit(count_users);
+    // console.log(users_data);
+    if(users_data)
+    {
+        return res.status(200).json(users_data);
+    }
+    else {
+        return res.status(403).json({"message" : "cannot find data" });
+    }
+})
+
+
+app.get('/user', async function (req, res){
+    const id = req.query.id;
+    
+    // console.log(id);
+    const user_data = await Users.findById(id);
+    //console.log(user_data);
+    if(user_data)
+    {
+        return res.status(200).json({user_data});
+    }
+    else {
+        return res.status(204).json({"message" : "cannot find data" });
+    }
+})
+
 app.post('/signup',async function(req, res){
     const {name, email, password} = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     const user = await Users.findOne({email}).exec();
 
     if(user)
@@ -47,7 +81,7 @@ app.post('/signup',async function(req, res){
     else 
     {
         const hash = await bcrypt.hash(password, saltRounds);
-        console.log(hash);
+        // console.log(hash);
         const new_user = await Users.create({name, email, password : hash});
         res.status(200).json({message : "ok"});
     }
@@ -74,8 +108,6 @@ app.get('/', authenticateUser, function(req, res){
 
 app.post('/login',async function(req, res){
         const {email, password} = req.body;
-        
-        // console.log(req.sessionID);
         const user = await Users.findOne({email: email}).exec();
         console.log(user);
         if(user )
