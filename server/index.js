@@ -5,7 +5,9 @@ const cors = require('cors')
 const session = require('express-session');
 const Users = require('./Schema.js')
 // var sessionstore = require('sessionstore');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 
 const app = express();
@@ -44,7 +46,9 @@ app.post('/signup',async function(req, res){
     }
     else 
     {
-        const new_user = await Users.create({name, email, password});
+        const hash = await bcrypt.hash(password, saltRounds);
+        console.log(hash);
+        const new_user = await Users.create({name, email, password : hash});
         res.status(200).json({message : "ok"});
     }
 
@@ -76,7 +80,7 @@ app.post('/login',async function(req, res){
         console.log(user);
         if(user )
         {
-            if( password === user.password){
+            if( bcrypt.compare(user.password, password)){
                 const token = jwt.sign({id : user._id, email : user.email}, 'Zenmonk', {
                     expiresIn: '4h'
                 })
